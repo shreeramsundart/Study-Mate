@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepThink AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10a37f',
+                        secondary: '#1a7f64',
+                        accent: '#10a37f',
+                        dark: '#202123',
+                        light: '#f7f7f8',
+                        gray: {
+                            50: '#f7f7f8',
+                            100: '#ececf1',
+                            200: '#d9d9e3',
+                            300: '#c5c5d2',
+                            400: '#acacbe',
+                            500: '#8e8ea0',
+                            600: '#6e6e80',
+                            700: '#565869',
+                            800: '#353740',
+                            900: '#202123'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        /* Message Styles */
+        .message-user {
+            background-color: #f7f7f8;
+        }
+
+        .message-assistant {
+            background-color: #ffffff;
+        }
+
+        .message-container {
+            border-bottom: 1px solid #ececf1;
+        }
+
+        /* Tool Badges */
+        .tool-badge {
+            font-size: 0.75rem;
+            padding: 0.125rem 0.5rem;
+        }
+
+        .tool-rag {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .tool-search {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .tool-youtube {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .tool-summarize {
+            background-color: #f3e8ff;
+            color: #6b21a8;
+        }
+
+        .tool-chat {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .tool-image {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        /* Loading Animation */
+        .typing-dots {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .typing-dots span {
+            height: 8px;
+            width: 8px;
+            margin: 0 1px;
+            background-color: #8e8ea0;
+            border-radius: 50%;
+            display: inline-block;
+            animation: typing 1.4s infinite both;
+        }
+
+        .typing-dots span:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+            }
+
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        /* Smooth Transitions */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Markdown-like Content */
+        .markdown-content {
+            line-height: 1.6;
+        }
+
+        .markdown-content h1,
+        .markdown-content h2,
+        .markdown-content h3 {
+            font-weight: bold;
+            margin: 1em 0 0.5em 0;
+        }
+
+        .markdown-content h1 {
+            font-size: 1.5em;
+        }
+
+        .markdown-content h2 {
+            font-size: 1.3em;
+        }
+
+        .markdown-content h3 {
+            font-size: 1.1em;
+        }
+
+        .markdown-content p {
+            margin: 0.5em 0;
+        }
+
+        .markdown-content ul,
+        .markdown-content ol {
+            margin: 0.5em 0;
+            padding-left: 1.5em;
+        }
+
+        .markdown-content li {
+            margin: 0.25em 0;
+        }
+
+        .markdown-content code {
+            background-color: #f1f1f1;
+            padding: 0.2em 0.4em;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .markdown-content pre {
+            background-color: #f1f1f1;
+            padding: 1em;
+            overflow-x: auto;
+            margin: 1em 0;
+        }
+
+        .markdown-content blockquote {
+            border-left: 3px solid #ddd;
+            padding-left: 1em;
+            margin: 1em 0;
+            color: #666;
+        }
+
+        .markdown-content a {
+            color: #10a37f;
+            text-decoration: underline;
+        }
+
+        /* Image Preview */
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            object-fit: cover;
+        }
+
+        /* Remove rounded corners globally */
+        .rounded,
+        .rounded-lg,
+        .rounded-full,
+        .rounded-xl {
+            border-radius: 0 !important;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+    <!-- Sidebar -->
+    <div class="fixed left-0 top-0 bottom-0 w-64 bg-gray-900 text-white flex flex-col z-40 transition-transform duration-300 ease-in-out"
+        id="sidebar">
+        <!-- Logo -->
+        <div class="p-4 border-b border-gray-700">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-primary flex items-center justify-center">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h1 class="text-xl font-bold">DeepThink AI</h1>
+            </div>
+        </div>
+
+
+
+        <!-- User Info (when logged in) -->
+        <div class="p-4 border-b border-gray-700 hidden" id="user-info-section">
+            <div class="flex items-center space-x-3 mb-3">
+                <div
+                    class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-lg font-bold">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <p class="font-medium truncate" id="username">User</p>
+                    <p class="text-xs text-gray-400 truncate" id="user-email">user@example.com</p>
+                </div>
+            </div>
+            <button onclick="logout()"
+                class="w-full border border-gray-600 text-gray-300 py-2 hover:bg-gray-800 hover:text-white transition text-xs">
+                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+            </button>
+        </div>
+
+        <!-- Auth Buttons (when not logged in) -->
+        <div class="p-4 border-b border-gray-700" id="auth-buttons">
+            <button onclick="showLoginModal()"
+                class="w-full bg-primary text-white py-2 mb-2 hover:bg-secondary transition">
+                <i class="fas fa-sign-in-alt mr-2"></i>Login
+            </button>
+            <button onclick="showRegisterModal()"
+                class="w-full border border-primary text-primary py-2 hover:bg-primary hover:text-white transition">
+                <i class="fas fa-user-plus mr-2"></i>Register
+            </button>
+        </div>
+
+        <!-- New Chat Button -->
+        <div class="p-4 border-b border-gray-700">
+            <button onclick="createNewSession()"
+                class="w-full flex items-center justify-center space-x-2 bg-gray-800 hover:bg-gray-700 py-3 transition">
+                <i class="fas fa-plus"></i>
+                <span>New Chat</span>
+            </button>
+        </div>
+
+        <!-- Chat Sessions -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar">
+            <div class="p-4">
+                <h3 class="text-sm font-medium text-gray-400 mb-3">Chat History</h3>
+                <div class="space-y-1" id="sessions-list">
+                    <div class="text-center text-gray-500 py-4">
+                        <p>No chats yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="p-4 border-t border-gray-700 bg-gray-800 bg-opacity-50">
+            <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">System Status</h4>
+            <div class="space-y-2 text-xs">
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-400">Google AI</span>
+                    <span id="ai-status" class="px-2 py-0.5 rounded bg-gray-700 text-gray-300">Checking...</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-400">RAG System</span>
+                    <span id="rag-status" class="px-2 py-0.5 rounded bg-gray-700 text-gray-300">Checking...</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-400">Web Search</span>
+                    <span id="web-search-status"
+                        class="px-2 py-0.5 rounded bg-gray-700 text-gray-300">Checking...</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-400">YouTube</span>
+                    <span id="youtube-status" class="px-2 py-0.5 rounded bg-gray-700 text-gray-300">Checking...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+
+        <button onclick="showSettingsModal()"
+            class="w-full flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-gray-800 p-2 transition">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </button>
+    </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="ml-0 lg:ml-64 transition-all duration-300 ease-in-out">
+        <!-- Header -->
+        <header class="sticky top-0 z-30 bg-white border-b border-gray-200">
+            <div class="flex items-center justify-between px-6 py-4">
+                <!-- Mobile Menu Button -->
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-600">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+
+                <!-- Title -->
+                <div class="flex-1 text-center lg:text-left">
+                    <h2 class="text-lg font-semibold" id="session-title">DeepThink AI Assistant</h2>
+                    <p class="text-sm text-gray-500" id="session-info">Ask me anything</p>
+                </div>
+
+                <!-- User Actions -->
+                <div class="flex items-center space-x-4">
+
+
+                    <!-- User Menu -->
+                    <div class="relative" id="user-menu-container">
+                        <button onclick="toggleUserMenu()"
+                            class="flex items-center space-x-2 text-gray-700 hover:text-gray-900">
+                            <div class="w-8 h-8 bg-primary flex items-center justify-center text-white">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span class="hidden lg:inline" id="username-header">Guest</span>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 bg-white shadow-lg border border-gray-200 hidden z-50"
+                            id="user-menu">
+                            <div class="p-4 border-b">
+                                <p class="font-medium" id="menu-username">Guest</p>
+                                <p class="text-sm text-gray-500" id="menu-email"></p>
+                            </div>
+                            <div class="p-2">
+                                <button onclick="showSettingsModal()"
+                                    class="w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-cog mr-2"></i>Settings
+                                </button>
+                                <button onclick="logout()"
+                                    class="w-full text-left px-3 py-2 text-red-600 hover:bg-red-50">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Chat Container -->
+        <main class="flex-1">
+            <!-- Welcome Screen -->
+            <div class="max-w-3xl mx-auto py-12 px-4" id="welcome-screen">
+                <div class="text-center">
+                    <div
+                        class="w-24 h-24 bg-gradient-to-br from-primary to-secondary flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-robot text-4xl text-white"></i>
+                    </div>
+                    <h1 class="text-4xl font-bold mb-4">How can I help you today?</h1>
+                    <p class="text-gray-600 mb-8 max-w-2xl mx-auto">
+                        I'm your AI assistant. I can analyze your documents, search the web, find YouTube videos, and
+                        answer your questions.
+                        Just type your query and I'll choose the best tool to help you!
+                    </p>
+
+
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="max-w-3xl mx-auto px-4 pb-32" id="chat-container" style="display: none;">
+                <div id="chat-messages" class="space-y-6"></div>
+            </div>
+        </main>
+
+        <!-- Chat Input -->
+        <div class="fixed bottom-0 left-0 right-0 lg:left-64 bg-white border-t border-gray-200">
+            <div class="max-w-3xl mx-auto px-4 py-4">
+                <div class="relative">
+                    <!-- Tool Selection Popup (for paperclip) -->
+                    <div class="absolute bottom-full left-0 mb-2 bg-white shadow-lg border border-gray-200 p-2 hidden"
+                        id="tool-popup">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="sendWithTool('web_search')"
+                                class="flex items-center space-x-2 px-3 py-2 text-sm hover:bg-gray-100">
+                                <i class="fas fa-search text-blue-500"></i>
+                                <span>Web Search</span>
+                            </button>
+                            <button onclick="sendWithTool('youtube_search')"
+                                class="flex items-center space-x-2 px-3 py-2 text-sm hover:bg-gray-100">
+                                <i class="fab fa-youtube text-red-500"></i>
+                                <span>YouTube</span>
+                            </button>
+                            <button onclick="sendWithTool('summarize')"
+                                class="flex items-center space-x-2 px-3 py-2 text-sm hover:bg-gray-100">
+                                <i class="fas fa-file-contract text-purple-500"></i>
+                                <span>Summarize</span>
+                            </button>
+                            <button onclick="sendWithTool('chat')"
+                                class="flex items-center space-x-2 px-3 py-2 text-sm hover:bg-gray-100">
+                                <i class="fas fa-robot text-green-500"></i>
+                                <span>AI Chat</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- File Upload Popup (for plus icon) -->
+                    <div class="absolute bottom-full right-0 mb-2 bg-white shadow-lg border border-gray-200 p-2 hidden"
+                        id="upload-popup">
+                        <div class="space-y-2">
+                            <label
+                                class="flex items-center space-x-2 px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer">
+                                <i class="fas fa-image text-green-500"></i>
+                                <span>Upload Image</span>
+                                <input type="file" id="image-upload" accept="image/*" class="hidden"
+                                    onchange="handleImageUpload(event)">
+                            </label>
+                            <label
+                                class="flex items-center space-x-2 px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer">
+                                <i class="fas fa-file-pdf text-red-500"></i>
+                                <span>Upload PDF</span>
+                                <input type="file" id="pdf-upload" accept=".pdf" class="hidden"
+                                    onchange="handlePDFUpload(event)">
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Main Input -->
+                    <div class="flex items-end space-x-2">
+                        <div class="flex-1 relative">
+                            <textarea id="message-input" placeholder="Message DeepThink AI..."
+                                class="w-full border border-gray-300 py-3 pl-4 pr-24 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                                rows="1" onkeydown="handleKeyPress(event)" oninput="autoResize(this)"></textarea>
+
+                            <!-- Plus Button for Uploads -->
+                            <button onclick="toggleUploadPopup()"
+                                class="absolute right-16 bottom-3 text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-plus"></i>
+                            </button>
+
+                            <!-- Paperclip Button for Tools -->
+                            <button onclick="toggleToolPopup()"
+                                class="absolute right-28 bottom-3 text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+
+                            <!-- Send Button -->
+                            <button onclick="sendMessage()"
+                                class="absolute right-3 bottom-3 bg-primary text-white p-2 hover:bg-secondary transition disabled:opacity-50"
+                                id="send-button">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white shadow-2xl w-full max-w-md p-6 mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Login</h3>
+                <button onclick="hideModal('login-modal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="login-form">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="login-email" required
+                            class="w-full border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" id="login-password" required
+                            class="w-full border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div class="text-red-500 text-sm hidden" id="login-error"></div>
+
+                    <button type="submit"
+                        class="w-full bg-primary text-white py-3 font-medium hover:bg-secondary transition">
+                        Login
+                    </button>
+                </div>
+            </form>
+
+            <p class="text-center text-gray-600 mt-4">
+                Don't have an account?
+                <button onclick="showRegisterModal()" class="text-primary font-medium hover:underline">Register</button>
+            </p>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white shadow-2xl w-full max-w-md p-6 mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Register</h3>
+                <button onclick="hideModal('register-modal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="register-form">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                        <input type="text" id="register-username" required
+                            class="w-full border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="register-email" required
+                            class="w-full border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" id="register-password" required
+                            class="w-full border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                        <input type="password" id="register-confirm-password" required
+                            class="w-full border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+
+                    <div class="text-red-500 text-sm hidden" id="register-error"></div>
+
+                    <button type="submit"
+                        class="w-full bg-primary text-white py-3 font-medium hover:bg-secondary transition">
+                        Create Account
+                    </button>
+                </div>
+            </form>
+
+            <p class="text-center text-gray-600 mt-4">
+                Already have an account?
+                <button onclick="showLoginModal()" class="text-primary font-medium hover:underline">Login</button>
+            </p>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white shadow-2xl w-full max-w-md p-6 mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Upload PDF Document</h3>
+                <button onclick="hideModal('upload-modal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="upload-form">
+                <div class="space-y-4">
+                    <div class="border-2 border-dashed border-gray-300 p-8 text-center">
+                        <i class="fas fa-file-pdf text-4xl text-red-500 mb-3"></i>
+                        <p class="text-gray-600 mb-2">Drag & drop your PDF file here</p>
+                        <p class="text-sm text-gray-500 mb-4">or</p>
+                        <input type="file" id="pdf-file" accept=".pdf" required class="hidden">
+                        <label for="pdf-file"
+                            class="inline-block bg-primary text-white px-4 py-2 cursor-pointer hover:bg-secondary transition">
+                            <i class="fas fa-folder-open mr-2"></i>Choose File
+                        </label>
+                        <p class="text-sm text-gray-500 mt-2" id="file-name">No file selected</p>
+                    </div>
+
+                    <div class="text-red-500 text-sm hidden" id="upload-error"></div>
+
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="hideModal('upload-modal')"
+                            class="flex-1 border border-gray-300 text-gray-700 py-3 font-medium hover:bg-gray-50 transition">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                            class="flex-1 bg-primary text-white py-3 font-medium hover:bg-secondary transition">
+                            Upload & Process
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white shadow-2xl w-full max-w-md p-6 mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Settings</h3>
+                <button onclick="hideModal('settings-modal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Clear Data Section -->
+                <div class="border border-red-200 bg-red-50 p-4">
+                    <h4 class="font-medium text-red-800 mb-2">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Danger Zone
+                    </h4>
+                    <p class="text-sm text-red-600 mb-4">
+                        This will permanently delete all your chat history, uploaded documents, and sessions.
+                    </p>
+                    <button onclick="clearAllData()"
+                        class="w-full bg-red-600 text-white py-2 font-medium hover:bg-red-700 transition">
+                        <i class="fas fa-trash mr-2"></i>Clear All Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white shadow-2xl p-8 text-center">
+            <div class="typing-dots mb-4">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <p class="text-lg font-medium" id="loading-text">Processing...</p>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Global variables
+        let currentUser = null;
+        let currentSession = null;
+        let currentLanguage = 'English';
+        let authToken = null;
+        let userMenuOpen = false;
+        let toolPopupOpen = false;
+        let uploadPopupOpen = false;
+
+        // DOM elements
+        const chatMessages = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message-input');
+        const chatContainer = document.getElementById('chat-container');
+        const welcomeScreen = document.getElementById('welcome-screen');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function () {
+            checkAuthStatus();
+            checkHealthStatus();
+            setupEventListeners();
+
+            // Check if user is already logged in
+            const savedToken = localStorage.getItem('authToken');
+            const savedUser = localStorage.getItem('user');
+
+            if (savedToken && savedUser) {
+                authToken = savedToken;
+                currentUser = JSON.parse(savedUser);
+                updateUIForLoggedInUser();
+                loadSessions();
+                updateLanguagePreference();
+            }
+
+            // Close popups when clicking outside
+            document.addEventListener('click', function (event) {
+                if (!event.target.closest('#user-menu-container')) {
+                    hideUserMenu();
+                }
+                if (!event.target.closest('#tool-popup') && !event.target.closest('.fa-paperclip')) {
+                    hideToolPopup();
+                }
+                if (!event.target.closest('#upload-popup') && !event.target.closest('.fa-plus')) {
+                    hideUploadPopup();
+                }
+            });
+        });
+
+        // Event Listeners
+        function setupEventListeners() {
+            // Login form
+            document.getElementById('login-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                login();
+            });
+
+            // Register form
+            document.getElementById('register-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                register();
+            });
+
+            // Upload form
+            document.getElementById('upload-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                uploadDocument();
+            });
+
+            // File input change
+            document.getElementById('pdf-file').addEventListener('change', function (e) {
+                const fileName = e.target.files[0] ? e.target.files[0].name : 'No file selected';
+                document.getElementById('file-name').textContent = fileName;
+            });
+
+            // Drag and drop for file upload
+            const uploadArea = document.querySelector('#upload-form .border-dashed');
+            uploadArea.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                uploadArea.classList.add('border-primary', 'bg-blue-50');
+            });
+
+            uploadArea.addEventListener('dragleave', function (e) {
+                e.preventDefault();
+                uploadArea.classList.remove('border-primary', 'bg-blue-50');
+            });
+
+            uploadArea.addEventListener('drop', function (e) {
+                e.preventDefault();
+                uploadArea.classList.remove('border-primary', 'bg-blue-50');
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type === 'application/pdf') {
+                    document.getElementById('pdf-file').files = files;
+                    document.getElementById('file-name').textContent = files[0].name;
+                } else {
+                    showError('upload-error', 'Please upload a PDF file only.');
+                }
+            });
+        }
+
+        // API Calls
+        async function apiCall(endpoint, method = 'GET', data = null, requiresAuth = false, isFormData = false) {
+            const headers = {};
+
+            if (!isFormData) {
+                headers['Content-Type'] = 'application/json';
+            }
+
+            if (requiresAuth && authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+
+            const options = {
+                method,
+                headers
+            };
+
+            if (data) {
+                if (isFormData) {
+                    options.body = data;
+                } else {
+                    options.body = JSON.stringify(data);
+                }
+            }
+
+            try {
+                const response = await fetch(`/api${endpoint}`, options);
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || `API Error: ${response.status}`);
+                }
+
+                return result;
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
+
+        // Auth Functions
+        async function login() {
+            showLoading('Logging in...');
+
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const result = await apiCall('/auth/login', 'POST', { email, password });
+
+                authToken = result.token;
+                currentUser = result.user;
+
+                // Save to localStorage
+                localStorage.setItem('authToken', authToken);
+                localStorage.setItem('user', JSON.stringify(currentUser));
+
+                updateUIForLoggedInUser();
+                hideModal('login-modal');
+                showSuccess('Login successful!');
+
+                // Load user data
+                loadSessions();
+                updateLanguagePreference();
+
+            } catch (error) {
+                showError('login-error', error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function register() {
+            showLoading('Creating account...');
+
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+
+            if (password !== confirmPassword) {
+                showError('register-error', 'Passwords do not match');
+                hideLoading();
+                return;
+            }
+
+            try {
+                const result = await apiCall('/auth/register', 'POST', {
+                    username,
+                    email,
+                    password
+                });
+
+                authToken = result.token;
+                currentUser = result.user;
+
+                // Save to localStorage
+                localStorage.setItem('authToken', authToken);
+                localStorage.setItem('user', JSON.stringify(currentUser));
+
+                updateUIForLoggedInUser();
+                hideModal('register-modal');
+                showSuccess('Registration successful!');
+
+                // Load user data
+                loadSessions();
+                updateLanguagePreference();
+
+            } catch (error) {
+                showError('register-error', error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            currentSession = null;
+
+            // Clear localStorage
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+
+            // Reset UI
+            document.getElementById('user-info-section').classList.add('hidden');
+            document.getElementById('auth-buttons').classList.remove('hidden');
+            document.getElementById('username').textContent = 'Guest';
+            document.getElementById('username-header').textContent = 'Guest';
+            document.getElementById('menu-username').textContent = 'Guest';
+            document.getElementById('menu-email').textContent = '';
+            document.getElementById('user-email').textContent = '';
+
+            // Reset chat
+            showWelcomeScreen();
+
+            hideUserMenu();
+            showSuccess('Logged out successfully!');
+        }
+
+        // Session Functions
+        async function createNewSession() {
+            try {
+                if (!currentUser) {
+                    showLoginModal();
+                    return;
+                }
+
+                const result = await apiCall('/chat/session', 'POST', null, true);
+                currentSession = result;
+
+                // Update UI
+                document.getElementById('session-title').textContent = 'New Chat';
+                document.getElementById('session-info').textContent = 'Ask me anything';
+
+                // Show chat interface
+                showChatInterface();
+
+                // Add welcome message
+                chatMessages.innerHTML = '';
+                addMessageToChat('Hello! I\'m your AI assistant. I can help you with document analysis, web searches, YouTube videos, and general questions. Just ask!', 'assistant', 'chat', []);
+
+                loadSessions();
+                showSuccess('New chat started!');
+            } catch (error) {
+                console.error('Error creating session:', error);
+            }
+        }
+
+        async function loadSession(sessionId) {
+            try {
+                if (!currentUser) return;
+
+                const result = await apiCall(`/chat/history?session_id=${sessionId}`, 'GET', null, true);
+                currentSession = { session_id: sessionId };
+
+                // Update UI
+                document.getElementById('session-title').textContent = result.session_title || 'Chat Session';
+                document.getElementById('session-info').textContent = 'Continuing conversation';
+
+                // Show chat interface
+                showChatInterface();
+
+                // Display chat history
+                chatMessages.innerHTML = '';
+                result.history.forEach(message => {
+                    if (message.content) {
+                        addMessageToChat(message.content, 'user', 'chat', []);
+                    }
+                    if (message.response) {
+                        addMessageToChat(message.response, 'assistant', message.tool_used || 'chat', message.sources || []);
+                    }
+                });
+
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                showSuccess('Session loaded!');
+            } catch (error) {
+                console.error('Error loading session:', error);
+            }
+        }
+
+        async function loadSessions() {
+            if (!currentUser) return;
+
+            try {
+                const result = await apiCall('/sessions', 'GET', null, true);
+
+                const container = document.getElementById('sessions-list');
+                if (result.sessions && result.sessions.length > 0) {
+                    container.innerHTML = result.sessions.slice(0, 10).map(session => `
+                        <div class="group">
+                            <button onclick="loadSession('${session.session_id}')" class="w-full text-left px-3 py-2 hover:bg-gray-800 flex items-center justify-between ${currentSession?.session_id === session.session_id ? 'bg-gray-800' : ''}">
+                                <div class="flex-1 truncate">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-comment text-gray-400"></i>
+                                        <span class="truncate">${session.title || 'Untitled Chat'}</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 truncate">${new Date(session.created_at * 1000).toLocaleDateString()}</p>
+                                </div>
+                                <button onclick="event.stopPropagation(); deleteSession('${session.session_id}')" class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 p-1">
+                                    <i class="fas fa-trash text-sm"></i>
+                                </button>
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = `
+                        <div class="text-center text-gray-500 py-4">
+                            <p>No chats yet</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+            }
+        }
+
+        async function deleteSession(sessionId) {
+            if (!confirm('Delete this chat session? This action cannot be undone.')) return;
+
+            try {
+                await apiCall(`/sessions/${sessionId}`, 'DELETE', null, true);
+
+                if (currentSession?.session_id === sessionId) {
+                    currentSession = null;
+                    showWelcomeScreen();
+                }
+
+                loadSessions();
+                showSuccess('Chat deleted!');
+            } catch (error) {
+                showError('Error deleting chat: ' + error.message);
+            }
+        }
+
+        // Chat Functions
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            if (!currentUser) {
+                showLoginModal();
+                return;
+            }
+
+            if (!currentSession) {
+                await createNewSession();
+            }
+
+            // Add user message to chat
+            addMessageToChat(message, 'user', 'chat', []);
+            messageInput.value = '';
+            autoResize(messageInput);
+
+            // Disable send button
+            document.getElementById('send-button').disabled = true;
+
+            // Show typing indicator
+            const typingId = showTypingIndicator();
+
+            try {
+                const result = await apiCall('/chat/message', 'POST', {
+                    message,
+                    session_id: currentSession.session_id,
+                    language: currentLanguage
+                }, true);
+
+                // Remove typing indicator
+                removeTypingIndicator(typingId);
+
+                // Add assistant response
+                addMessageToChat(result.response, 'assistant', result.tool_used, result.sources || []);
+
+                // Update session title if AI generated a new one
+                if (result.chat_title) {
+                    document.getElementById('session-title').textContent = result.chat_title;
+                    loadSessions();
+                }
+
+            } catch (error) {
+                removeTypingIndicator(typingId);
+                addMessageToChat(`Error: ${error.message}`, 'assistant', 'chat', []);
+            } finally {
+                // Re-enable send button
+                document.getElementById('send-button').disabled = false;
+            }
+        }
+
+        async function sendWithTool(tool) {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            if (!currentUser) {
+                showLoginModal();
+                return;
+            }
+
+            if (!currentSession) {
+                await createNewSession();
+            }
+
+            // Add user message to chat
+            addMessageToChat(message, 'user', tool, []);
+            messageInput.value = '';
+            autoResize(messageInput);
+            hideToolPopup();
+
+            // Disable send button
+            document.getElementById('send-button').disabled = true;
+
+            // Show typing indicator
+            const typingId = showTypingIndicator();
+
+            try {
+                const result = await apiCall('/chat/message', 'POST', {
+                    message,
+                    session_id: currentSession.session_id,
+                    language: currentLanguage,
+                    use_specific_tool: tool
+                }, true);
+
+                // Remove typing indicator
+                removeTypingIndicator(typingId);
+
+                // Add assistant response
+                addMessageToChat(result.response, 'assistant', result.tool_used, result.sources || []);
+
+                // Update session title if AI generated a new one
+                if (result.chat_title) {
+                    document.getElementById('session-title').textContent = result.chat_title;
+                    loadSessions();
+                }
+
+            } catch (error) {
+                removeTypingIndicator(typingId);
+                addMessageToChat(`Error: ${error.message}`, 'assistant', tool, []);
+            } finally {
+                // Re-enable send button
+                document.getElementById('send-button').disabled = false;
+            }
+        }
+
+        // File Upload Functions
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showError('Please select an image file');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                showError('Image file size should be less than 10MB');
+                return;
+            }
+
+            if (!currentUser) {
+                showLoginModal();
+                return;
+            }
+
+            if (!currentSession) {
+                await createNewSession();
+            }
+
+            showLoading('Analyzing image...');
+            hideUploadPopup();
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('session_id', currentSession.session_id);
+            formData.append('language', currentLanguage);
+
+            try {
+                // Show image preview
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    addImageMessageToChat(e.target.result, file.name);
+                };
+                reader.readAsDataURL(file);
+
+                // Send to backend for analysis
+                const result = await apiCall('/chat/analyze-image', 'POST', formData, true, true);
+
+                // Add assistant response
+                addMessageToChat(result.response, 'assistant', 'image', []);
+
+            } catch (error) {
+                addMessageToChat(`Error analyzing image: ${error.message}`, 'assistant', 'image', []);
+            } finally {
+                hideLoading();
+                // Clear file input
+                event.target.value = '';
+            }
+        }
+
+        async function handlePDFUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            console.log("Attempting to upload:", file.name);
+
+            if (file.type !== 'application/pdf') {
+                showError('Please select a PDF file');
+                return;
+            }
+
+            if (file.size > 50 * 1024 * 1024) { // 50MB limit
+                showError('PDF file size should be less than 50MB');
+                return;
+            }
+
+            if (!currentUser) {
+                showLoginModal();
+                return;
+            }
+
+            showLoading('Uploading and processing PDF...');
+            hideUploadPopup();
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/documents/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Upload failed');
+                }
+
+                showSuccess('PDF uploaded successfully! You can now ask questions about it.');
+
+            } catch (error) {
+                showError('PDF upload error: ' + error.message);
+            } finally {
+                hideLoading();
+                // Clear file input
+                event.target.value = '';
+            }
+        }
+
+        function addImageMessageToChat(imageData, fileName) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `fade-in message-container message-user p-4 md:p-6`;
+
+            messageDiv.innerHTML = `
+                <div class="flex space-x-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-primary text-white flex items-center justify-center">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="tool-badge tool-image">
+                                <i class="fas fa-image mr-1"></i>Image Upload
+                            </span>
+                        </div>
+                        <div class="markdown-content">
+                            <p><strong>Uploaded Image:</strong> ${fileName}</p>
+                            <img src="${imageData}" alt="Uploaded image" class="image-preview mt-2 border">
+                        </div>
+                        <div class="text-xs text-gray-500 mt-2">
+                            ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addMessageToChat(content, role, toolUsed = 'chat', sources = []) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `fade-in message-container ${role === 'user' ? 'message-user' : 'message-assistant'} p-4 md:p-6`;
+
+            // Tool badge for assistant
+            const toolBadge = role === 'assistant' ? `
+                <div class="flex items-center space-x-2 mb-2">
+                    <span class="tool-badge ${getToolClass(toolUsed)}">
+                        <i class="${getToolIcon(toolUsed)} mr-1"></i>${formatToolName(toolUsed)}
+                    </span>
+                    ${sources.length > 0 ? `
+                        <span class="text-xs text-gray-500">
+                            <i class="fas fa-file-alt mr-1"></i>${sources.length} source${sources.length > 1 ? 's' : ''}
+                        </span>
+                    ` : ''}
+                </div>
+            ` : '';
+
+            // Sources section
+            const sourcesSection = sources.length > 0 && role === 'assistant' ? `
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <p class="text-xs font-medium text-gray-600 mb-2">Sources:</p>
+                    <div class="space-y-1">
+                        ${sources.map(source => `
+                            <div class="flex items-center text-xs text-gray-500">
+                                <i class="fas fa-file mr-1"></i>
+                                <span class="truncate flex-1">${source.file || 'Document'}</span>
+                                ${source.score ? `<span class="ml-2 px-1 bg-gray-100 text-xs">${source.score.toFixed(2)}</span>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : '';
+
+            messageDiv.innerHTML = `
+                <div class="flex space-x-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 flex items-center justify-center ${role === 'user' ? 'bg-primary text-white' : 'bg-accent text-white'}">
+                            <i class="${role === 'user' ? 'fas fa-user' : 'fas fa-robot'}"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        ${toolBadge}
+                        <div class="markdown-content whitespace-pre-wrap">${formatMessage(content)}</div>
+                        ${sourcesSection}
+                        <div class="text-xs text-gray-500 mt-2">
+                            ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'fade-in message-container message-assistant p-4 md:p-6';
+            typingDiv.id = 'typing-indicator';
+
+            typingDiv.innerHTML = `
+                <div class="flex space-x-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 flex items-center justify-center bg-accent text-white">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2">
+                            <div class="typing-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <span class="text-sm text-gray-600">Thinking...</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            return 'typing-indicator';
+        }
+
+        function removeTypingIndicator(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.remove();
+            }
+        }
+
+        // Document Functions
+        async function uploadDocument() {
+            const fileInput = document.getElementById('pdf-file');
+            if (!fileInput.files.length) {
+                showError('upload-error', 'Please select a PDF file');
+                return;
+            }
+
+            showLoading('Processing PDF...');
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/api/documents/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Upload failed');
+                }
+
+                hideModal('upload-modal');
+                showSuccess('Document uploaded successfully!');
+
+                // Reset file input
+                fileInput.value = '';
+                document.getElementById('file-name').textContent = 'No file selected';
+
+            } catch (error) {
+                showError('upload-error', error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Settings Functions
+        async function clearAllData() {
+            if (!confirm('WARNING: This will permanently delete ALL your data including chats, documents, and sessions. This action cannot be undone. Are you sure?')) {
+                return;
+            }
+
+            showLoading('Clearing all data...');
+
+            try {
+                await apiCall('/auth/clear-data', 'POST', null, true);
+
+                // Clear local state
+                currentSession = null;
+
+                // Reset UI
+                showWelcomeScreen();
+                loadSessions();
+
+                hideModal('settings-modal');
+                showSuccess('All data cleared successfully!');
+
+            } catch (error) {
+                showError('Error clearing data: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function updateLanguagePreference() {
+            if (!currentUser) return;
+
+            const language = document.getElementById('settings-language').value;
+            currentLanguage = language;
+            document.getElementById('language-select').value = language;
+
+            // Save to user preferences
+            apiCall('/auth/update', 'PUT', {
+                preferences: { language: language }
+            }, true).catch(console.error);
+
+            showSuccess(`Language preference updated to ${language}`);
+        }
+
+        // Utility Functions
+        function formatMessage(text) {
+            // Simple markdown formatting
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>')
+                .replace(/# (.*?)(\n|$)/g, '<h1>$1</h1>')
+                .replace(/## (.*?)(\n|$)/g, '<h2>$1</h2>')
+                .replace(/### (.*?)(\n|$)/g, '<h3>$1</h3>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-primary hover:underline">$1</a>')
+                .replace(/^\s*>\s*(.*)/gm, '<blockquote>$1</blockquote>')
+                .replace(/^\s*\*\s+(.*)/gm, '<li>$1</li>')
+                .replace(/<\/li><li>/g, '</li><li>');
+        }
+
+        function getToolClass(tool) {
+            switch (tool) {
+                case 'rag': return 'tool-rag';
+                case 'web_search': return 'tool-search';
+                case 'youtube_search': return 'tool-youtube';
+                case 'summarize': return 'tool-summarize';
+                case 'image': return 'tool-image';
+                default: return 'tool-chat';
+            }
+        }
+
+        function getToolIcon(tool) {
+            switch (tool) {
+                case 'rag': return 'fas fa-database';
+                case 'web_search': return 'fas fa-search';
+                case 'youtube_search': return 'fab fa-youtube';
+                case 'summarize': return 'fas fa-file-contract';
+                case 'image': return 'fas fa-image';
+                default: return 'fas fa-robot';
+            }
+        }
+
+        function formatToolName(tool) {
+            switch (tool) {
+                case 'rag': return 'Document Analysis';
+                case 'web_search': return 'Web Search';
+                case 'youtube_search': return 'YouTube';
+                case 'summarize': return 'Summary';
+                case 'image': return 'Image Analysis';
+                default: return 'AI Chat';
+            }
+        }
+
+        function setQuickExample(example) {
+            messageInput.value = example;
+            messageInput.focus();
+            autoResize(messageInput);
+        }
+
+        function changeLanguage() {
+            currentLanguage = document.getElementById('language-select').value;
+            if (currentUser) {
+                updateLanguagePreference();
+            }
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+
+        function toggleUserMenu() {
+            userMenuOpen = !userMenuOpen;
+            const menu = document.getElementById('user-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function hideUserMenu() {
+            userMenuOpen = false;
+            document.getElementById('user-menu').classList.add('hidden');
+        }
+
+        function toggleToolPopup() {
+            toolPopupOpen = !toolPopupOpen;
+            hideUploadPopup();
+            const popup = document.getElementById('tool-popup');
+            popup.classList.toggle('hidden');
+        }
+
+        function hideToolPopup() {
+            toolPopupOpen = false;
+            document.getElementById('tool-popup').classList.add('hidden');
+        }
+
+        function toggleUploadPopup() {
+            uploadPopupOpen = !uploadPopupOpen;
+            hideToolPopup();
+            const popup = document.getElementById('upload-popup');
+            popup.classList.toggle('hidden');
+        }
+
+        function hideUploadPopup() {
+            uploadPopupOpen = false;
+            document.getElementById('upload-popup').classList.add('hidden');
+        }
+
+        // UI Functions
+        function checkAuthStatus() {
+            const token = localStorage.getItem('authToken');
+            if (!token || token === 'null' || token === 'undefined') return;
+
+            fetch('/api/auth/me', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json().then(user => {
+                            currentUser = user;
+                            authToken = localStorage.getItem('authToken');
+                            updateUIForLoggedInUser();
+                            loadSessions();
+                        });
+                    }
+                })
+                .catch(error => console.log('Not authenticated:', error));
+        }
+
+        function updateUIForLoggedInUser() {
+            document.getElementById('user-info-section').classList.remove('hidden');
+            document.getElementById('auth-buttons').classList.add('hidden');
+
+            document.getElementById('username').textContent = currentUser.username;
+            document.getElementById('username-header').textContent = currentUser.username;
+            document.getElementById('menu-username').textContent = currentUser.username;
+            document.getElementById('menu-email').textContent = currentUser.email;
+            document.getElementById('user-email').textContent = currentUser.email;
+
+            // Set language from preferences
+            if (currentUser.preferences?.language) {
+                currentLanguage = currentUser.preferences.language;
+                document.getElementById('language-select').value = currentLanguage;
+                document.getElementById('settings-language').value = currentLanguage;
+            }
+        }
+
+        function showChatInterface() {
+            welcomeScreen.style.display = 'none';
+            chatContainer.style.display = 'block';
+        }
+
+        function showWelcomeScreen() {
+            welcomeScreen.style.display = 'block';
+            chatContainer.style.display = 'none';
+            chatMessages.innerHTML = '';
+        }
+
+        // Health Check
+        async function checkHealthStatus() {
+            try {
+                const result = await apiCall('/health');
+
+                const aiStatus = document.getElementById('ai-status');
+                const ragStatus = document.getElementById('rag-status');
+                const webStatus = document.getElementById('web-search-status');
+                const youtubeStatus = document.getElementById('youtube-status');
+
+                aiStatus.textContent = result.google_ai_configured ? '✅ Online' : '❌ Offline';
+                aiStatus.className = result.google_ai_configured ?
+                    'px-2 py-1 text-xs bg-green-100 text-green-800' :
+                    'px-2 py-1 text-xs bg-red-100 text-red-800';
+
+                ragStatus.textContent = result.rag_available ? '✅ Online' : '❌ Offline';
+                ragStatus.className = result.rag_available ?
+                    'px-2 py-1 text-xs bg-green-100 text-green-800' :
+                    'px-2 py-1 text-xs bg-red-100 text-red-800';
+
+                webStatus.textContent = result.web_search_available ? '✅ Online' : '❌ Offline';
+                webStatus.className = result.web_search_available ?
+                    'px-2 py-1 text-xs bg-green-100 text-green-800' :
+                    'px-2 py-1 text-xs bg-red-100 text-red-800';
+
+                youtubeStatus.textContent = result.youtube_search_available ? '✅ Online' : '❌ Offline';
+                youtubeStatus.className = result.youtube_search_available ?
+                    'px-2 py-1 text-xs bg-green-100 text-green-800' :
+                    'px-2 py-1 text-xs bg-red-100 text-red-800';
+
+            } catch (error) {
+                console.error('Health check failed:', error);
+            }
+        }
+
+        // Modal Functions
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            // Clear errors
+            document.querySelectorAll(`#${modalId} .text-red-500`).forEach(el => {
+                el.classList.add('hidden');
+                el.textContent = '';
+            });
+        }
+
+        function showLoginModal() {
+            showModal('login-modal');
+        }
+
+        function showRegisterModal() {
+            showModal('register-modal');
+        }
+
+        function showUploadModal() {
+            if (!currentUser) {
+                showLoginModal();
+                return;
+            }
+            showModal('upload-modal');
+        }
+
+        function showSettingsModal() {
+            showModal('settings-modal');
+        }
+
+        function showLoading(text = 'Processing...') {
+            document.getElementById('loading-text').textContent = text;
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = message;
+                element.classList.remove('hidden');
+            } else {
+                alert(message);
+            }
+        }
+
+        function showSuccess(message) {
+            // Create toast notification
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 shadow-lg fade-in z-50';
+            toast.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-check-circle"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            document.body.appendChild(toast);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+
+</html>

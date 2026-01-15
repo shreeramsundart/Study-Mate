@@ -1,0 +1,60 @@
+# Core
+Flask
+Flask-CORS
+Flask-JWT-Extended
+Flask-Bcrypt
+python-dotenv
+
+# Database
+pymongo
+motor
+
+# Google AI
+google-genai
+google-api-python-client
+
+# Web Search
+duckduckgo-search
+requests
+
+# Document Processing
+PyPDF2
+pdfplumber
+pymupdf
+pdf2image
+pytesseract
+Pillow
+
+# Text Processing
+langchain-text-splitters
+sentence-transformers
+numpy
+nltk
+spacy
+https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
+
+# Vector & Search
+faiss-cpu
+scikit-learn
+scipy
+
+# MCP Integration
+mcp
+
+# Utilities
+tqdm
+python-json-logger
+colorama
+tabulate
+
+# Development
+pytest
+black
+flake8
+pylint
+
+# Optional (for production)
+gunicorn
+gevent
+redis
+celery
